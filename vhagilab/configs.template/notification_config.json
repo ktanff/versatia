@@ -1,0 +1,6 @@
+{
+    "EMAIL_SRV": "smtp.example.com",
+    "ADMIN_EMAIL": "admin@example.com",
+    "EMAIL_PASS": "xorencrypted_in_base64",
+    "PORT": 465
+}

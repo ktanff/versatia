@@ -1,0 +1,10 @@
+{
+    "ACCESS_TOKEN": "0123456789ABCDEF",
+    "GATEWAY": "proxy.exampl.com",
+    "PROTOCOL": "https",
+    "DEFAULT_MODEL": "gpt-4o-mini",
+    "BASIC_MODEL": "gpt-4o-mini",
+    "DEFAULT_ASST": "asst_klmnopqrstuvwxyz",
+    "MENTOR_ASST": "asst_efghijklmn",
+    "CLIENT": "Gradio"
+}

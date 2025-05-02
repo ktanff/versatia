@@ -1,0 +1,40 @@
+--- routes.py	2025-04-29 10:55:11.542207451 +0330
++++ routes.py-original	2025-04-29 10:51:16.188693806 +0330
+@@ -401,10 +401,9 @@
+         def login_check(user: str = Depends(get_current_user)):
+             if (app.auth is None and app.auth_dependency is None) or user is not None:
+                 return
+-            return RedirectResponse(url="/signin/", status_code=status.HTTP_302_FOUND)
+-            #raise HTTPException(
+-            #    status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+-            #)
++            raise HTTPException(
++                status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
++            )
+ 
+         @router.get("/token")
+         @router.get("/token/")
+@@ -613,10 +612,9 @@
+                 config["layout"] = config["page"][page]["layout"]
+                 config["current_page"] = page
+             elif app.auth_dependency:
+-                return RedirectResponse(url="/signin/", status_code=status.HTTP_302_FOUND)
+-                #raise HTTPException(
+-                #    status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+-                #)
++                raise HTTPException(
++                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
++                )
+             else:
+                 config = {
+                     "auth_required": True,
+@@ -783,8 +781,7 @@
+         async def favicon():
+             blocks = app.get_blocks()
+             if blocks.favicon_path is None:
+-                return static_resource("img/favicon.ico")
+-                #return static_resource("img/logo.svg")
++                return static_resource("img/logo.svg")
+             else:
+                 return FileResponse(blocks.favicon_path)
+ 
