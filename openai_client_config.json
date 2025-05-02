@@ -1,0 +1,17 @@
+{
+    "ACCESS_TOKEN": "xxxxxxxxxxxxxxx",
+    
+    "GATEWAY": "ai.proxy.example.com",
+    "PROTOCOL": "http",
+    
+    "DEFAULT_MODEL": "gpt-4.1",
+    "BASIC_MODEL": "gpt-4.1-nano",
+    
+    "DEFAULT_ASST": "asst_xxxxxxxxxxxxxxx",
+    "VIDA_ASST": "asst_xxxxxxxxxxxxxxx",
+    "SHANA_ASST": "asst_xxxxxxxxxxxxxxx",
+    "TIMA_ASST": "asst_xxxxxxxxxxxxxxx",
+    "MENTOR_ASST": "asst_xxxxxxxxxxxxxxx",
+    
+    "CLIENT": "Versatia"
+}
