@@ -1,1 +1,8 @@
-
+.*
+!.gitignore
+__pycache__/
+cache/
+threads/
+*.pyc
+Untitled*
+untitled*
