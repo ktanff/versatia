@@ -86,7 +86,7 @@ def init_app(request:gr.Request):
     citeuxmode = user_credential.get_user_tag(user,'CiteUxMode',0)
     return ( gr.update(visible=True) if user_credential.get_user_tag(user,'admin') else gr.skip(),
              info,
-             gr.Chatbot(label=asst_info[5:43],type='messages'),
+             gr.Chatbot(label=ftruncstr(asst_info[5:],45),type='messages'),
              citeUxModes[citeuxmode],
              gr.Dropdown(choices=load_choices(user,(TEMP_THREAD_LABEL,"")),value="")
            )

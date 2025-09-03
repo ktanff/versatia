@@ -40,7 +40,7 @@ def setup(config_file):
         _notif_template = config.get('TEMPLATE','@notif_template.txt')
         if _notif_template[0]=='@':
             try:
-                with open(_notif_template[1:], 'r') as notif_template_file:
+                with open(_notif_template[1:], 'r', encoding='utf-8') as notif_template_file:
                     _notif_template = notif_template_file.read()
             except FileNotFoundError:
                 pass

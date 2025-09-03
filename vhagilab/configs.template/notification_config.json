@@ -1,7 +1,7 @@
 {
-    "EMAIL_SRV": "pmail.sbu.ac.ir",
-    "ADMIN_EMAIL": "agilab@sbu.ac.ir",
-    "EMAIL_PASS": "xxxxxxxxxxxxxxx",
+    "EMAIL_SRV": "smtp.example.com",
+    "ADMIN_EMAIL": "admin@example.com",
+    "EMAIL_PASS": "xorencrypted_in_base64",
     "PORT": 465,
     "TEMPLATE": "@notif_template.txt"
 }

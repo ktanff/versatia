@@ -24,7 +24,7 @@ def init_guest(request:gr.Request):
     guest_asst_info = assistant_info()
     user = gs.user(request)
     info = f"`{ORGANIZATION} - {CASE}  -- {user} :: {guest_asst_info}`  \n---"
-    return info, gr.Chatbot(label=guest_asst_info[5:43],type='messages')
+    return info, gr.Chatbot(label=ftruncstr(guest_asst_info[5:],50),type='messages')
 
 def ichat_fn(msg, history, request:gr.Request):
     if msg:

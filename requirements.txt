@@ -1,3 +1,5 @@
 gradio==5.27.1
 gradio-client==1.9.1
 openai==1.76.0
+itsdangerous==2.2.0
+bcrypt==4.3.0
