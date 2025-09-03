@@ -119,7 +119,7 @@ def assistant_info( asst_id='DEFAULT_ASST', /, *, client_id=_DEFAULT_CLIENT ):
     try:
         vs_id = asst_obj.tool_resources.file_search.vector_store_ids[0]
         max_ret=next(o.file_search.max_num_results for o in asst_obj.tools if o.type=='file_search')
-        vs_name = cl.beta.vector_stores.retrieve(vs_id).name
+        vs_name = cl.vector_stores.retrieve(vs_id).name
     except AttributeError:
         vs_name = None
     pre=f"Asst:{asst_obj.name} - Vs:{vs_name}" + (f" @{max_ret}" if vs_name else '')

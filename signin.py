@@ -24,6 +24,16 @@ def _on_login(username,password,target_path):
                 pswd=gr.skip()
             return user,pswd,target_path
 
+def _on_guest_login():
+    user="guest"
+    pswd=""
+    if user_credential.get_user_tag(user,'blocked'):
+        gr.Warning(f"حساب کاربری {user} مسدود است.",duration=5)
+        return '','',' - '
+    else:
+        target_path = '/guest' 
+    return user,pswd,target_path
+
 with gr.Blocks(
     head=gu.head(),
     css=gu.css(agradeintbackground=True),
@@ -49,7 +59,9 @@ with gr.Blocks(
                 password_txtbox=gr.Textbox(label="گذرواژه",type='password',max_length=60,rtl=False,text_align='right')
             login_btn=gr.Button("ورود",variant='primary')
             gr.Markdown("---  \n  \n---")
-            gr.Button("ثبت نام", link="/register/")
+            with gr.Row():
+                gr.Button("ثبت نام", link="/register/", scale=3)
+                guest_btn=gr.Button("ورود مهمان", scale=1)
             gr.Markdown("---")
             resetPasswdTimer = gr.Timer(30)
             resetPasswdTimer.tick(lambda p:"" if p else gr.skip(),password_txtbox,password_txtbox,show_progress='hidden')
@@ -58,6 +70,11 @@ with gr.Blocks(
             gu.login_by(login_btn,gu.signin_hub,username_txtbox,password_txtbox,
                         preauthfn=_on_login,
                         preauthinputs=[username_txtbox,password_txtbox,target_path],
+                        preauthoutputs=[username_txtbox,password_txtbox,target_path],
+                        login_target=target_path)
+            gu.login_by(guest_btn,gu.signin_hub,username_txtbox,password_txtbox,
+                        preauthfn=_on_guest_login,
+                        preauthinputs=[],
                         preauthoutputs=[username_txtbox,password_txtbox,target_path],
                         login_target=target_path)
         gr.Column(scale=1,min_width=20)
