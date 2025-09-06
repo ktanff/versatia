@@ -1,11 +1,13 @@
-from . import openai_client
-from .openai_client import *
+from . import openai_beta_client
+from .openai_beta_client import *
 from . import gradio_utils
 # "from . import sess_utils.*" implicitly imported into gradio_utils
 
 from .token import *
 from .lambdas import *
+from .gentrait import *
 from .cache import *
+from .fallback import *
 from .thread_registry import *
 from .calendars_conversion import *
 
@@ -23,7 +25,7 @@ with open('app_schema.json',encoding='utf-8') as _app_schema_file:
         persona = load(persona_file)
     assert app_schema['ORGANIZATION']==persona['ORGANIZATION'], "Organizations on app schema and persona not matched."
     assert app_schema['CASE']==persona['CASE'], "Cases on app schema and persona not matched."
-    openai_client.set_config(app_schema['OPENAI_CONFIG'])
+    openai_beta_client.set_config(app_schema['OPENAI_CONFIG'])
     gradio_utils.set_default_tagline(**app_schema)
     
     set_cache_era(app_schema['APP_SESSION_ERA'])

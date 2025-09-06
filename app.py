@@ -93,7 +93,6 @@ def init_app(request:gr.Request):
 
 def ichat_fn(msg, history, tone_mode, asst_id, request:gr.Request):
     if msg:
-        sess = request.session_hash
         response = ichat(tid(request,tone_mode,asst_id),msg,asst_id)
         if resolve_filecitations(response):
             user = gs.user(request)
@@ -106,7 +105,6 @@ def ichat_fn(msg, history, tone_mode, asst_id, request:gr.Request):
 
 def schat_fn(msg, history, tone_mode, asst_id, request:gr.Request):
     if msg:
-        sess = request.session_hash
         for progmsg in schat(tid(request,tone_mode,asst_id),msg,asst_id):
             yield progmsg.content[0].text.value
         try:
@@ -122,7 +120,6 @@ def schat_fn(msg, history, tone_mode, asst_id, request:gr.Request):
 
 def pchat_fn(msg, history, tone_mode, asst_id, request:gr.Request):
     if msg:
-        sess = request.session_hash
         i=0
         for progmsg in pchat(tid(request,tone_mode,asst_id),msg,asst_id):
             if progmsg.status=="in_progress":

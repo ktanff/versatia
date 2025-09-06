@@ -13,5 +13,7 @@
     "TIMA_ASST": "asst_xxxxxxxxxxxxxxx",
     "MENTOR_ASST": "asst_xxxxxxxxxxxxxxx",
     
-    "CLIENT": "Versatia"
+    "CLIENT": "Versatia",
+    
+    "FALLBACK_CLIENT_ID": "id or filename of another client config as used as a fallback in failed/timeout connections. Discard it at all, if no fallback you want."
 }

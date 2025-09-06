@@ -3,8 +3,8 @@ from vhagilab.SessionPlatform import *
 from vhagilab.vhfront_msg import vhfront_msg
 import gradio as gr
 
-# A TokenClosure with default fixed-term 3 minuts tokens
-__guest_tc = TokenClosure(default_ttl= -180 , stale_limit=10) 
+# A TokenClosure with default fixed-term 5 minuts tokens
+__guest_tc = TokenClosure(default_ttl= -300 , stale_limit=10) 
 
 def guest_authnz(user,passwd,agent):
     if __guest_tc.isSignedin('_shadow',agent):

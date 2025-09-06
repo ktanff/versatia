@@ -13,6 +13,9 @@ print(last_msg.content[0].text.value)
 '''
 
 from openai import OpenAI
+from openai import APIConnectionError, APITimeoutError, AuthenticationError
+from ..gentrait import gentrait
+from ..fallback import fallback_rotate
 from ..cache import cache
 import json as _json
 
@@ -48,6 +51,13 @@ def client(client_id=_DEFAULT_CLIENT):
         add_client(client_id)
     return _clients[client_id]
 
+_client_exceptions = (APIConnectionError, APITimeoutError, AuthenticationError)
+def _client_fallback_fn(client_id=_DEFAULT_CLIENT):
+    cnfg = _configs[client_id]
+    if 'FALLBACK_CLIENT_ID' in cnfg:
+        return cnfg['FALLBACK_CLIENT_ID']
+
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def create_thread( ORGANIZATION, CASE, USER, title="Temp", *, client_id=_DEFAULT_CLIENT ):
     thread = client(client_id).beta.threads.create(
         metadata = {
@@ -61,12 +71,14 @@ def create_thread( ORGANIZATION, CASE, USER, title="Temp", *, client_id=_DEFAULT
     )
     return thread
 
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 @cache(ttl=86400)
 def _get_thread_meta( thrd_id, /, *, client_id=_DEFAULT_CLIENT ):
     cl = client(client_id)
     t = cl.beta.threads.retrieve(thrd_id)
     return t.metadata
 
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def _set_thread_meta( thrd_id, meta, /, *, client_id=_DEFAULT_CLIENT ):
     clid = {} if client_id==_DEFAULT_CLIENT else {'client_id':client_id}
     if _get_thread_meta(thrd_id, **clid ) != meta:
@@ -79,6 +91,7 @@ def get_thread_tag( thrd_id, tag, default=None, /, *, client_id=_DEFAULT_CLIENT 
     meta = _get_thread_meta(thrd_id, **clid )
     return meta.get(tag,default)
 
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def set_thread_tag( thrd_id, tag, value='*', /, *, client_id=_DEFAULT_CLIENT ):
     clid = {} if client_id==_DEFAULT_CLIENT else {'client_id':client_id}
     if not value:
@@ -91,6 +104,7 @@ def set_thread_tag( thrd_id, tag, value='*', /, *, client_id=_DEFAULT_CLIENT ):
             cl.beta.threads.update(thrd_id,metadata=meta)
             _get_thread_meta( thrd_id, __FRESH=True, __HACK=meta, **clid )
 
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def del_thread_tag( thrd_id, tag, /, *, client_id=_DEFAULT_CLIENT ):
     clid = {} if client_id==_DEFAULT_CLIENT else {'client_id':client_id}
     meta = _get_thread_meta(thrd_id, **clid )
@@ -100,6 +114,7 @@ def del_thread_tag( thrd_id, tag, /, *, client_id=_DEFAULT_CLIENT ):
         cl.beta.threads.update(thrd_id,metadata=meta)
         _get_thread_meta( thrd_id, __FRESH=True, __HACK=meta, **clid )
 
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def delete_threads( threads_id, /, *, client_id=_DEFAULT_CLIENT, verbose=True ):
     from time import sleep
     cl = client(client_id)
@@ -109,6 +124,7 @@ def delete_threads( threads_id, /, *, client_id=_DEFAULT_CLIENT, verbose=True ):
         sleep(1)
         if verbose: print('deleted.')
 
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 @cache(ttl=86400)
 def assistant_info( asst_id='DEFAULT_ASST', /, *, client_id=_DEFAULT_CLIENT ):
     import base64
@@ -117,13 +133,17 @@ def assistant_info( asst_id='DEFAULT_ASST', /, *, client_id=_DEFAULT_CLIENT ):
     if asst_id in cnfg: asst_id=cnfg[asst_id]
     asst_obj = cl.beta.assistants.retrieve(asst_id)
     try:
+        asst_model = asst_obj.model
+        asst_name = asst_obj.name
         vs_id = asst_obj.tool_resources.file_search.vector_store_ids[0]
         max_ret=next(o.file_search.max_num_results for o in asst_obj.tools if o.type=='file_search')
         vs_name = cl.vector_stores.retrieve(vs_id).name
     except AttributeError:
+        asst_model = ""
+        asst_name = "×××"
         vs_name = None
-    pre=f"Asst:{asst_obj.name} - Vs:{vs_name}" + (f" @{max_ret}" if vs_name else '')
-    return f"{pre} {base64.b64encode(asst_obj.model.encode('utf-8')).decode('utf-8')}.{hash(pre)%100000}"
+    pre=f"Asst:{asst_name} - Vs:{vs_name}" + (f" @{max_ret}" if vs_name else '')
+    return f"{pre} {base64.b64encode(asst_model.encode('utf-8')).decode('utf-8')}.{hash(pre)%100000}"
 
 def is_closed_msg(msg_obj):
     return ( msg_obj.metadata.get("closed",None) or 
@@ -151,6 +171,7 @@ def _check_closed_resp(resp,_closed,_cl):
         )
 
 # Instant chat
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def ichat( thrd_id, user_msg, /, asst_id='DEFAULT_ASST', *,
            client_id=_DEFAULT_CLIENT, model_id=None, closed=False, verbose=False):
     cl = client(client_id)
@@ -188,6 +209,8 @@ def ichat( thrd_id, user_msg, /, asst_id='DEFAULT_ASST', *,
     return msg_rsp[-1]
 
 ## Stream chat
+@gentrait
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def schat( thrd_id, user_msg, /, asst_id='DEFAULT_ASST', *,
            client_id=_DEFAULT_CLIENT, model_id=None, closed=False):
     cl = client(client_id)
@@ -250,6 +273,8 @@ def schat( thrd_id, user_msg, /, asst_id='DEFAULT_ASST', *,
     return resp
 
 ## Pacing chat. It is in fact a Stream chat, but yields also empty deltas when the ai is thinking.
+@gentrait
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def pchat( thrd_id, user_msg, /, asst_id='DEFAULT_ASST', *,
            client_id=_DEFAULT_CLIENT, model_id=None, closed=False):
     cl = client(client_id)
@@ -315,6 +340,7 @@ def pchat( thrd_id, user_msg, /, asst_id='DEFAULT_ASST', *,
     list_messages(thrd_id,__FRESH=True,__HACK=lm,**clid)
     return resp
 
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def cancel_run(thrd_id, /, *, client_id=_DEFAULT_CLIENT):
     global _busy_threads
     if thrd_id in _busy_threads:
@@ -352,11 +378,13 @@ def load_msg_obj(data):
     else:
         return None
 
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 @cache(ttl=864000,dump_fallback=dump_msg_obj,load_fallback=load_msg_obj)
 def list_messages(thrd_id, /, *, client_id=_DEFAULT_CLIENT):
     cl = client(client_id)
     return cl.beta.threads.messages.list(thrd_id, limit=100).data[::-1]
 
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def undo_chat(thrd_id, n_msg_rsp=1, /, *, client_id=_DEFAULT_CLIENT, closed=False):
     clid = {} if client_id==_DEFAULT_CLIENT else {'client_id':client_id}
     lm = list_messages(thrd_id, **clid)
@@ -372,6 +400,7 @@ def undo_chat(thrd_id, n_msg_rsp=1, /, *, client_id=_DEFAULT_CLIENT, closed=Fals
         back+=1
     list_messages(thrd_id,__FRESH=True,__HACK=lm[:-back],**clid)
 
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 @cache(ttl=864000)
 def get_filename(file_id, /, *, client_id=_DEFAULT_CLIENT):
     cl = client(client_id)
@@ -389,6 +418,7 @@ def resolve_filecitations( msg_response, *, client_id=_DEFAULT_CLIENT ):
     return anyref
 
 ## Augment annotations with quotes of cited files.
+@fallback_rotate( _client_fallback_fn, _client_exceptions, scope="api" )
 def augment_quotes( msg_response, *, client_id=_DEFAULT_CLIENT ):
     if all( hasattr(a.file_citation,'quote') and a.file_citation.quote
             for a in msg_response.content[0].text.annotations 
