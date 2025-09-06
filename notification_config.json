@@ -1,6 +1,6 @@
 {
-    "EMAIL_SRV": "pmail.sbu.ac.ir",
-    "ADMIN_EMAIL": "agilab@sbu.ac.ir",
+    "EMAIL_SRV": "mail.example.com",
+    "ADMIN_EMAIL": "admin@example.com",
     "EMAIL_PASS": "xxxxxxxxxxxxxxx",
     "PORT": 465,
     "TEMPLATE": "@notif_template.txt"
