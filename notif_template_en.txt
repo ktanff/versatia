@@ -1,0 +1,8 @@
+Dear User %USER%
+
+Welcome to the %TITLE% system.
+You can now access the system at %URL% using the following login information:
+username: %USERNAME%
+password: %PASSWORD%
+
+Please change your password after your first login and avoid disclosing it to others.
