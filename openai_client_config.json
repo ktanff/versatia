@@ -1,5 +1,5 @@
 {
-    "ACCESS_TOKEN": "inq-GCD26QSXLPSOQE7F",
+    "ACCESS_TOKEN": "xxx-xxxxxxxxxxxxxxxx",
     
     "GATEWAY": "oai.helaletes-subruficollis-dev.tyact.com",
     "PROTOCOL": "http",
@@ -7,11 +7,11 @@
     "DEFAULT_MODEL": "gpt-4.1",
     "BASIC_MODEL": "gpt-4.1-mini",
     
-    "DEFAULT_ASST": "asst_SPwro5rgvAaiWe9qjuol0tDB",
+    "DEFAULT_ASST": "asst_xxxxxxxxxxxxxx",
     "VIDA_ASST": "asst_xxxxxxxxxxxxxxx",
     "SHANA_ASST": "asst_xxxxxxxxxxxxxxx",
     "TIMA_ASST": "asst_xxxxxxxxxxxxxxx",
-    "MENTOR_ASST": "asst_E1yvFdriV5SQjvY5Cd2QbNLT",
+    "MENTOR_ASST": "asst_xxxxxxxxxxxxxx",
     
     "CLIENT": "Versatia",
     
