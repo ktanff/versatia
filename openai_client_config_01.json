@@ -1,17 +1,18 @@
 {
-    "ACCESS_TOKEN": "zzzzzzzzzzzzzzz",
+    "_ACCESS_TOKEN": "inq-JTBVCCSIFAKUUXEC",
+    "ACCESS_TOKEN": "inq-KXYF4GMBBFO7FLIX",
     
-    "GATEWAY": "ai.backup_proxy.example.com",
+    "GATEWAY": "oai.dev.tyact.com",
     "PROTOCOL": "http",
     
     "DEFAULT_MODEL": "gpt-4.1",
     "BASIC_MODEL": "gpt-4.1-nano",
     
-    "DEFAULT_ASST": "asst_xxxxxxxxxxxxxxx",
+    "DEFAULT_ASST": "asst_SPwro5rgvAaiWe9qjuol0tDB",
     "VIDA_ASST": "asst_xxxxxxxxxxxxxxx",
     "SHANA_ASST": "asst_xxxxxxxxxxxxxxx",
     "TIMA_ASST": "asst_xxxxxxxxxxxxxxx",
-    "MENTOR_ASST": "asst_xxxxxxxxxxxxxxx",
+    "MENTOR_ASST": "asst_E1yvFdriV5SQjvY5Cd2QbNLT",
     
     "CLIENT": "Versatia",
     

@@ -34,10 +34,10 @@ def setup(config_file):
         _email_pass = xorcrypt( 
             b64decode( config['EMAIL_PASS'].encode('utf-8') ),
             config['ADMIN_EMAIL'].encode('utf-8')
-        ).decode('utf-8')
+        )
         _email_server = config['EMAIL_SRV']
         _email_server_port = config['PORT']
-        _notif_template = config.get('TEMPLATE','@notif_template.txt')
+        _notif_template = config.get('TEMPLATE','@notif_template_en.txt')
         if _notif_template[0]=='@':
             try:
                 with open(_notif_template[1:], 'r', encoding='utf-8') as notif_template_file:

@@ -53,7 +53,7 @@ with gr.Blocks(
         with gr.Column(scale=0,min_width=400):
             #gr.Markdown("### دستیار ...  \n## آزمایشگاه هوش مصنوعی جامع",rtl=True)
             gr.HTML('<center><img src="http://example.com/banner-320x132.gif" alt="EXAMPLE.COM" width="360"/></center>')
-            gr.Markdown("## دستیار ...",rtl=True)
+            gr.Markdown("## دستیار آموزشی",rtl=True)
             with gr.Group():
                 username_txtbox=gr.Textbox(label="نام کاربری",max_length=60,rtl=False,text_align='right')
                 password_txtbox=gr.Textbox(label="گذرواژه",type='password',max_length=60,rtl=False,text_align='right')

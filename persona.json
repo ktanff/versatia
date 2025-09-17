@@ -6,9 +6,9 @@
     "PER_THREAD_INST": "این رشته گفتگو درباره %SUBJECT% است. %NOTE%. ضمناً جهت اطلاع بدان که نام من %USER% است که صرفاً اگر جایی نیاز شد از آن استفاده کنی.",
     "PER_DAY_INST": "امروز %TODAY%  صرفاً جهت اطلاع که اگر جایی نیاز شد از آن استفاده کنی.",
     "BOTS": {
-        "         ویدا": "VIDA_ASST",
-        "         شانا": "SHANA_ASST",
-        "         تیما": "TIMA_ASST"        
+        "         ویدا": "DEFAULT_ASST",
+        "         شانا": "DEFAULT_ASST",
+        "         تیما": "DEFAULT_ASST"        
     },
     "TONES": {
         "پیش‌فرض": "Keep output short and concise. Avoid repeating my question or providing unnecessary conclusions for short responses.",
