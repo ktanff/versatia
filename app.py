@@ -158,7 +158,7 @@ def promote_thread(history, chsn_thrd, request:gr.Request):
                            asst_id = 'MENTOR_ASST', closed=True, verbose=True )
         sleep(2)
         set_thread_tag(t, "title", title_rsp.content[0].text.value.strip('"'))
-        # undo_chat(t,closed=True) is not required yet, because msg and resp are "closed"!
+        undo_chat(t,closed=True) #is not required yet, because msg and resp are "closed"!
         u = gs.user(request)
         add_thread(u,t)
         return gr.skip(),gr.Dropdown(choices=load_choices(u),value=t)
