@@ -1,6 +1,7 @@
 {
     "SESS_EXPIRE": "Session expired!  \nLog out, then, log back in.",
-    "GUEST_LIMIT": "Guest limit exceeded!  \nGuest evaluation is limited to 5 minutes.  \nTry 2 hours later.",
+    "GUEST_LIMIT": "Guest limit exceeded!  \nGuest evaluation is limited to one 5-min session every 2 houres.",
+    "SPECIAL_GUEST_LIMIT":  "Daily time limit exceeded!  \nThis user is allowed a maximum of 2 hours per day.",
     "USER_PASS_INCORRECT": "Username or password is incorrect!",
-    "SRV_NOT_RESPONSE": "The server is unresponsive. Please pause briefly and retry."
+    "SRV_NOT_RESPONSE": "Server not responding"
 }

@@ -1,5 +1,9 @@
 from typing import Any, Callable
 from .SessionPlatform import *
+from math import inf
+
+@SessionBoundTimeCredit(inf)
+class SessionTokenEntity(BaseTokenClosureEntity): pass
 
 __aSessPltfm:CookieSessionPlatform = None
 
@@ -13,9 +17,11 @@ def setup( authnz:Callable[[str,str,Any],bool|Any] ):
     from . import app_schema
     __aSessPltfm = CookieSessionPlatform (
                         AuthTokenClosure (
-                            TokenClosure (
-                                default_ttl = app_schema['INACTIVE_LIMIT'],
-                                stale_limit = app_schema['STALE_LIMIT']
+                            TimeCreditTokenClosure (
+                                TokenClosure (
+                                    stale_limit = app_schema['STALE_LIMIT']
+                                ),
+                                SessionTokenEntity
                             ),
                             authnz = authnz
                         ),

@@ -4,8 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-gradio = "==5.27.1"
-gradio-client = "==1.9.1"
+gradio = "==5.49.1"
+gradio-client = "==1.13.3"
 openai = "==1.76.0"
 itsdangerous
 bcrypt

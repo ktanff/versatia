@@ -48,47 +48,38 @@ def signout(req:Request):   # Signout endpoint
     from fastapi import status
     global __sps
     for sp in __sps:
-        sp.signout(req) or print(f"Unprivileged signing out: {req.headers}")
+        sp.relieve_agent(req) or print(f"Unprivileged signing out: {req.headers}")
     return RedirectResponse(url="/signin/", status_code=status.HTTP_302_FOUND)
 
-def privileged_users(users):
-    fltr = None
-    if isinstance(users,str):
-        if users[0]=='!':
-            users=users[1:]
-            fltr=lambda _:not(_)
+def privileged_users(user_patterns,permissive=True):
+    if not user_patterns:
+        return (lambda _:_) if permissive else (lambda _:(lambda _:None))
+    elif user_patterns[0]=='!' and len(user_patterns)==1:
+        return (lambda _:(lambda _:None)) if permissive else (lambda _:_)
+    if isinstance(user_patterns, str):
+        if user_patterns[0]=='!':
+            return privileged_users( user_patterns[1:].split(','), False )
         else:
-            fltr=lambda _:_
-        if users[0]=='@':
-            def decorator(auth_dep):
-                def wrapper_auth_dep(req:Request):
-                    from .user_credential import get_user_tag
-                    ua=auth_dep(req)
-                    cred_tag = users[1:]
-                    if ua and fltr( get_user_tag(ua[:ua.index('*')],cred_tag) ):
-                        return ua
-                    else:
-                        return None
-                return wrapper_auth_dep
-            return decorator
-        else:
-            users=[users]
-    if isinstance(users,(list,tuple,set)):
-        if "!" in users:
-            users.remove("!")
-            fltr = lambda _:not(_)
-        elif not callable(fltr):
-            fltr=lambda _:_
-        def decorator(auth_dep):
-            def wrapper_auth_dep(req:Request):
-                ua=auth_dep(req)
-                if ua and fltr( ua[:ua.index('*')] in users ):
-                    return ua
-                else:
-                    return None
-            return wrapper_auth_dep
-        return decorator
-    return lambda _:_
+            return privileged_users( user_patterns.split(','), True )
+    assert isinstance(user_patterns, list), f"Expected 'user_patterns' to be a list, got {type(user_patterns)}"
+    while '' in user_patterns: user_patterns.remove('')
+    if "!" in user_patterns:
+        user_patterns.remove("!")
+        return privileged_users( user_patterns, False )
+    def decorator(auth_dep):
+        def wrapper_auth_dep(req:Request):
+            ua=auth_dep(req)
+            if not ua: return ua
+            from .user_credential import get_user_tag
+            usr=ua[:ua.index('*')]
+            for ptrn in user_patterns:
+                if ( ptrn[0]=='@' and get_user_tag(usr,ptrn[1:])
+                    or usr is ptrn ):
+                        return ua if permissive else None
+            else:
+                return None if permissive else ua
+        return wrapper_auth_dep
+    return decorator
 
 def __mount_blocks(blocks,path,auth_dep=None,prvldg_users=None,/):
     global __platform, __mount_app
