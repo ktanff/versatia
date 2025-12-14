@@ -1,7 +1,7 @@
 {
-    "ACCESS_TOKEN": "zzzzzzzzzzzzzzz",
+    "ACCESS_TOKEN": "xxx-xxxxxxxxxxxxxxxx",
     
-    "GATEWAY": "ai.backup_proxy.example.com",
+    "GATEWAY": "oai.dev.tyact.com",
     "PROTOCOL": "http",
     
     "DEFAULT_MODEL": "gpt-4.1",
