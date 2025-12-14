@@ -18,6 +18,8 @@ def _on_login(username,password,target_path):
         else:
             if user_credential.get_user_tag(user,'guest'):
                 target_path = '/guest' 
+            elif user_credential.get_user_tag(user,'special_guest'):
+                target_path = '/special_guest' 
             if user==username:
                 user=gr.skip()
             if pswd==password:

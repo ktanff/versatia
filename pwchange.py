@@ -53,33 +53,31 @@ with gr.Blocks(
 ) as pwchange:
     ### Add a session platform to the blocks
     from vhagilab.aSessionPlatform import aSessionPlatform
-    gs = gu.grSessionPlatform(aSessionPlatform())
-    ###
-    with gr.Row():
-        gr.Column(scale=1,min_width=20)
-        with gr.Column(scale=0,min_width=400):
-            gr.Markdown("### تغییر گذرواژه")
-            with gr.Group():
-                cur_pswd_txtbox=gr.Textbox(label="گذرواژه فعلی",type='password',max_length=60,rtl=False,text_align='right')
-                new_pswd_txtbox=gr.Textbox(label="گذرواژه جدید",type='password',max_length=60,rtl=False,text_align='right')
-                rep_new_pswd_txtbox=gr.Textbox(label="بازنویسی گذرواژه جدید",type='password',max_length=60,rtl=False,text_align='right')
-            with gr.Row():
-                ok_btn=gr.Button("تغییر گذرواژه",variant='primary')
-                cancel_btn=gr.Button("انصراف",link="/")
-                done_txtbox=gr.Textbox(" - ",visible=False)
-            resetPasswdTimer = gr.Timer(90)
-            resetPasswdTimer.tick(lambda p:"" if p else gr.skip(),cur_pswd_txtbox,cur_pswd_txtbox,show_progress='hidden')
-            cur_pswd_txtbox.input(lambda p:79+len(p)%10 if p else gr.skip(),cur_pswd_txtbox,resetPasswdTimer,show_progress='hidden')
-        gr.Column(scale=1,min_width=20)
-    gu.add_tagline()
-    gs.loadOnSessionPlatform(pwchange)
-    from vhagilab.lambdas import nullfn
-    ok_btn.click (
-        fn = _on_pwchange,
-        inputs = [cur_pswd_txtbox,new_pswd_txtbox,rep_new_pswd_txtbox],
-        outputs = [cur_pswd_txtbox,new_pswd_txtbox,rep_new_pswd_txtbox,done_txtbox]
-        ).success (
-            fn = nullfn,
-            inputs = done_txtbox,
-            js = "function(done){if(done==done.trim()){window.open('/signout','_blank').focus();} }"
-        )
+    with gu.loadSessionPlatformOnBlocks(aSessionPlatform(), pwchange) as gs:
+        with gr.Row():
+            gr.Column(scale=1,min_width=20)
+            with gr.Column(scale=0,min_width=400):
+                gr.Markdown("### تغییر گذرواژه")
+                with gr.Group():
+                    cur_pswd_txtbox=gr.Textbox(label="گذرواژه فعلی",type='password',max_length=60,rtl=False,text_align='right')
+                    new_pswd_txtbox=gr.Textbox(label="گذرواژه جدید",type='password',max_length=60,rtl=False,text_align='right')
+                    rep_new_pswd_txtbox=gr.Textbox(label="بازنویسی گذرواژه جدید",type='password',max_length=60,rtl=False,text_align='right')
+                with gr.Row():
+                    ok_btn=gr.Button("تغییر گذرواژه",variant='primary')
+                    cancel_btn=gr.Button("انصراف",link="/")
+                    done_txtbox=gr.Textbox(" - ",visible=False)
+                resetPasswdTimer = gr.Timer(90)
+                resetPasswdTimer.tick(lambda p:"" if p else gr.skip(),cur_pswd_txtbox,cur_pswd_txtbox,show_progress='hidden')
+                cur_pswd_txtbox.input(lambda p:79+len(p)%10 if p else gr.skip(),cur_pswd_txtbox,resetPasswdTimer,show_progress='hidden')
+            gr.Column(scale=1,min_width=20)
+        gu.add_tagline()
+        from vhagilab.lambdas import nullfn
+        ok_btn.click (
+            fn = _on_pwchange,
+            inputs = [cur_pswd_txtbox,new_pswd_txtbox,rep_new_pswd_txtbox],
+            outputs = [cur_pswd_txtbox,new_pswd_txtbox,rep_new_pswd_txtbox,done_txtbox]
+            ).success (
+                fn = nullfn,
+                inputs = done_txtbox,
+                js = "function(done){if(done==done.trim()){location.replace('/signout');} }"
+            )

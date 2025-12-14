@@ -86,69 +86,60 @@ with gr.Blocks(
 ) as guest:
     ### Add a session platform to the blocks
     # Guest has a special session platform
-    gs = gu.grSessionPlatform(guestSessionPlatform.sp,on_unload=guest_unload,)
-    ###
-    with gr.Row(): #max_height=1000
-        with gr.Column(scale=5,min_width=400):
-            chatbox = gr.Chatbot(
-                scale=1,
-                min_height=400,
-                height='83vh',
-                type='messages',
-                rtl = True,
-                show_copy_all_button = True,
-                label = '---',
-                avatar_images = ("user.ico","ai.ico")
-            )
-            inputbox = gr.Textbox(
-                rtl = True,
-                lines = 1,
-                max_lines = 3,
-                #scale=0,
-                autofocus = True,
-                show_label = False,
-                submit_btn = "◁",
-                placeholder = "اینجا تایپ کنید ..."
-            )
-        with gr.Column(scale=1,min_width=280,variant='compact') as sidepanel:
-            info = gr.Markdown(label="Signature",show_label=True,container=True,min_height=40,max_height=70)
-            previewpane = gr.Markdown(
-                show_label=False,
-                show_copy_button=False,
-                container=True,
-                height='67vh',
-                min_height=150
-            )
-            with gr.Accordion("::: : ::: : ::: : ::: : ::: : ::: : ::: : ::: : ::: : :::",open=True) as acrdn:
+    with gu.loadSessionPlatformOnBlocks(
+        guestSessionPlatform.sp,
+        guest,
+        alive_check_every=10
+    ) as gs:
+        with gr.Row(): #max_height=1000
+            with gr.Column(scale=5,min_width=400):
+                chatbox = gr.Chatbot(
+                    scale=1,
+                    min_height=400,
+                    height='82vh',
+                    type='messages',
+                    rtl = True,
+                    show_copy_all_button = True,
+                    label = '---',
+                    avatar_images = ("user.ico","ai.ico")
+                )
+                inputbox = gr.Textbox(
+                    rtl = True,
+                    lines = 1,
+                    max_lines = 3,
+                    #scale=0,
+                    autofocus = True,
+                    show_label = False,
+                    submit_btn = "◁",
+                    placeholder = "اینجا تایپ کنید ..."
+                )
+            with gr.Sidebar("sidepanel",open=False,position='left') as sidepanel:
+                gr.Markdown("# دستیار مدیریت پیمان\n## شرکت مهندسی و توسعه گاز ایران",min_height="15vh",rtl=True)
+                with gr.Accordion("::: : ::: : ::: : ::: : ::: : ::: : ::: : ::: : ::: : :::",open=False) as acrdn:
+                    info = gr.Markdown(label="Signature",container=True,min_height="63vh",max_height="64vh")
                 gs.signout_by(gr.Button("خروج"))
-    gu.add_tagline()
-    ### Load app on the session platform
-    gs.loadOnSessionPlatform( guest,init_guest,
-                              on_load_outputs=[info,chatbox],
-                              alive_check_every=10
-                            )
-    gs.chatIntegrateOnLiveSession(pchat_fn,inputbox,chatbox,submit_btn="◁")
-    @gs.live_session(acrdn.expand,outputs=previewpane,show_progress=False)
-    def _adjust_shrink_pane():
-        return gr.update(height='67vh')
-    @gs.live_session(acrdn.collapse,outputs=previewpane,show_progress=False)
-    def _adjust_expand_pane():
-        return gr.update(height='73vh')
-    @gs.live_session( chatbox.clear, inputbox, chatbox, show_progress=False,
-                      js="(x) => confirm('از حذف این رشته گفتگو، اطمینان دارید؟')"
-                    )
-    def _on_clear(confirmed, request:gr.Request):
-        global guest_thread
-        sess=request.session_hash
-        t = guest_thread.get(sess,None)
-        if t:
-            if confirmed=="True":
-                guest_thread[sess]=None
-                client().beta.threads.delete(t)
-                return []
+        gu.add_tagline()
+        ### Load callback
+        gs.loaded.success( init_guest, outputs=[info,chatbox] )
+        gs.chatIntegrateOnLiveSession(pchat_fn,inputbox,chatbox,submit_btn="◁")
+        gs.live_session(sidepanel.expand,show_progress=False)()
+        gs.live_session(sidepanel.collapse,show_progress=False)()
+        @gs.live_session( chatbox.clear, inputbox, chatbox, show_progress=False,
+                          js="(x) => confirm('از حذف این رشته گفتگو، اطمینان دارید؟')"
+                        )
+        def _on_clear(confirmed, request:gr.Request):
+            global guest_thread
+            sess=request.session_hash
+            t = guest_thread.get(sess,None)
+            if t:
+                if confirmed=="True":
+                    guest_thread[sess]=None
+                    client().beta.threads.delete(t)
+                    return []
+                else:
+                    gr.Info("حذف رشته، لغو شد ✓")
+                    history = flip_thread(t,1)
+                    return history
             else:
-                gr.Info("حذف رشته، لغو شد ✓")
-                history = flip_thread(t,1)
-                return history
-        else:
-            return gr.skip()
+                return gr.skip()
+        guest.unload(guest_unload)

@@ -3,10 +3,10 @@ import gradio as _gr
 from typing import Any, Callable
 
 from ..sess_utils import *
-from .grSessionPlatform import grSessionPlatform
+from .grSessionPlatform import _grSessionPlatform
 
 base_setup (
-    session_wrapper_class = grSessionPlatform,
+    session_wrapper_class = _grSessionPlatform,
     mount_app = _gr.mount_gradio_app,
     module_blocks_type = _gr.Blocks
 )
@@ -35,7 +35,7 @@ def login_by(btn: _gr.Button,
     else:
         ev = btn.click(_signinhub,[user,passwd,login_target],login_target)
     ev.success(lambda _:"",login_target,login_target,
-               js="function(target){if(target==target.trim()){window.location.href=target+'/';} }"
+               js="function(target){if(target==target.trim()){location.replace(target+'/');} }"
               )
 
 def otherlogin_by(btn:_gr.Button):

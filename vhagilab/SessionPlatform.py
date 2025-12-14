@@ -16,12 +16,9 @@ class SessionPlatform(AuthTokenClosure):
                 return f"{user}*{agnt}"
         return None
     
-    def signout(self,req:Request):
+    def relieve_agent(self,req:Request):
         agnt = self.get_agent(req)
-        if agnt:
-            user = self.lastActiveUser(agnt)
-            if user and self.isSignedin(user,agnt):
-                super().signout(user,agnt)
+        super().cleanup(agnt)
         return agnt
     
     def grant_session(self,username,session_hash):
@@ -29,11 +26,11 @@ class SessionPlatform(AuthTokenClosure):
         self.setSub(user,agnt,session_hash)
     
     def end_session(self,session_hash):
-        self.checkAndExtendTTL(session_hash)
+        self.getTTLandAttend(session_hash)
         self.endSub(session_hash)
     
-    #__excludedkeys__ = SessionPlatform(AuthTokenClosure(TokenClosure(0,0),lambda *_:False)).__dict__.keys()
-    __excludedkeys__ = ['default_ttl','stale_limit','cont','subc','authnz', '__tc']
+    #__excludedkeys__ = SessionPlatform(AuthTokenClosure(TimeCreditTokenClosure(TokenClosure(0),BaseTokenClosureEntity),lambda*_:False)).__dict__.keys()
+    __excludedkeys__ = ['stale_limit','cont','subc','MAX_AGENT_SOFT_LIM','MAX_AGENT_HARD_LIM','MAX_USER_SOFT_LIM','MAX_USER_HARD_LIM','MAX_SESS_SOFT_LIM','MAX_SESS_HARD_LIM','authnz','__tc','__tctc']
     def __eq__(self,other):
         return ( isinstance(other,self.__class__) and 
                  all(getattr(other,attr)==value 
@@ -45,7 +42,7 @@ class CookieSessionPlatform(SessionPlatform):
     def __init__(self,
                  atc:AuthTokenClosure, *,
                  platform:FastAPI,
-                 APP_SESSION_ERA:str="tc-10001.01",
+                 APP_SESSION_ERA:str="tc-10002.01",
                  SESSION_SCRT_KEY:str|None=None,
                  **kwargs):
         super().__init__(atc)
@@ -72,7 +69,7 @@ class CookieSessionPlatform(SessionPlatform):
     
     def get_agent(self,request:Request,fallback=False):
         agnt = request.session.get(self.app_era)
-        if not agnt and fallback: # TODO: an internal tc is required to keep agent*__root__ tokens, ttl=max_age which checkandextend_True once meet here
+        if not agnt and fallback: # TODO: an internal tc is required to keep agent*__root__ tokens, ttl=max_age which attend_True once meet here
             from .token import safe_rand
             agnt = safe_rand()
         request.session[self.app_era]=agnt

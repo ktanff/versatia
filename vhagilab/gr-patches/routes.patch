@@ -1,40 +1,56 @@
---- routes.py	2025-04-29 10:55:11.542207451 +0330
-+++ routes.py-original	2025-04-29 10:51:16.188693806 +0330
-@@ -401,10 +401,9 @@
+--- routes.py.orig	2025-11-08
++++ routes.py	2025-11-08
+@@ -468,13 +468,14 @@
          def login_check(user: str = Depends(get_current_user)):
              if (app.auth is None and app.auth_dependency is None) or user is not None:
                  return
--            return RedirectResponse(url="/signin/", status_code=status.HTTP_302_FOUND)
--            #raise HTTPException(
--            #    status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
--            #)
-+            raise HTTPException(
-+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
-+            )
+-            raise HTTPException(
+-                status_code=status.HTTP_401_UNAUTHORIZED,
+-                detail={
+-                    "error": "Not authenticated",
+-                    "auth_message": blocks.auth_message,
+-                },
+-            )
++            return RedirectResponse(url="/signin/", status_code=status.HTTP_302_FOUND)
++            #raise HTTPException(
++            #    status_code=status.HTTP_401_UNAUTHORIZED,
++            #    detail={
++            #        "error": "Not authenticated",
++            #        "auth_message": blocks.auth_message,
++            #    },
++            #)
  
          @router.get("/token")
          @router.get("/token/")
-@@ -613,10 +612,9 @@
-                 config["layout"] = config["page"][page]["layout"]
-                 config["current_page"] = page
+@@ -700,13 +701,14 @@
+                 # so that static files are served from the correct root
+                 config = route_utils.update_root_in_config(config, root)
              elif app.auth_dependency:
--                return RedirectResponse(url="/signin/", status_code=status.HTTP_302_FOUND)
--                #raise HTTPException(
--                #    status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
--                #)
-+                raise HTTPException(
-+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
-+                )
+-                raise HTTPException(
+-                    status_code=status.HTTP_401_UNAUTHORIZED,
+-                    detail={
+-                        "error": "Not authenticated",
+-                        "auth_message": blocks.auth_message,
+-                    },
+-                )
++                return RedirectResponse(url="/signin/", status_code=status.HTTP_302_FOUND)
++                #raise HTTPException(
++                #    status_code=status.HTTP_401_UNAUTHORIZED,
++                #    detail={
++                #        "error": "Not authenticated",
++                #        "auth_message": blocks.auth_message,
++                #    },
++                #)
              else:
                  config = {
                      "auth_required": True,
-@@ -783,8 +781,7 @@
+@@ -977,7 +979,8 @@
          async def favicon():
              blocks = app.get_blocks()
              if blocks.favicon_path is None:
--                return static_resource("img/favicon.ico")
--                #return static_resource("img/logo.svg")
-+                return static_resource("img/logo.svg")
+-                return static_resource("img/logo.svg")
++                return static_resource("img/favicon.ico")
++                #return static_resource("img/logo.svg")
              else:
                  return FileResponse(blocks.favicon_path)
  

@@ -1,3 +1,4 @@
+import limUserSessionPlatform
 from vhagilab import app_schema
 from vhagilab import gradio_utils as gu
 from vhagilab.vhfront_msg import vhfront_msg
@@ -7,11 +8,11 @@ import gradio as gr
 
 ORGANIZATION = app_schema['ORGANIZATION']
 CASE = app_schema['CASE']
-app_thread={}
+special_guest_thread={}
 TEMP_THREAD_LABEL="         [ موقت ]"
 citeUxModes=['آماده-بسته','بازدرخواست','همیشه باز']
 toneModes = list(persona['TONES'])
-botChoices = list(persona['BOTS'].items())
+botChoices = list([("         دستیار اسناد همسان و ضمائم عمومی","SHANA_ASST")])
 
 def per_thread_instruction(user):
     per_thread_inst = persona['PER_THREAD_INST']
@@ -36,14 +37,14 @@ def tone_instruction(tone_mode):
 def tid(request:gr.Request,tone_mode=0,asst_id='DEFAULT_ASST'):
     from time import time as _now
     tday = int((_now()+12600)//86400)
-    global app_thread
+    global special_guest_thread
     sess = request.session_hash
-    t = app_thread.get(sess,None)
+    t = special_guest_thread.get(sess,None)
     if not t:
         user = gs.user(request)
         thrd = create_thread(ORGANIZATION,CASE,user)
         show_json(thrd)
-        t = app_thread[sess] = thrd.id
+        t = special_guest_thread[sess] = thrd.id
         set_thread_tag(t,"day",tday)
         if tone_mode:
             set_thread_tag(t,"tone",tone_mode)
@@ -70,7 +71,6 @@ def tid(request:gr.Request,tone_mode=0,asst_id='DEFAULT_ASST'):
         if tone_mode != cur_tone_mode:
             set_thread_tag(t,"tone",tone_mode)
             ichat(t,tone_instruction(tone_mode),asst_id,closed=True)
-            ichat(t,tone_instruction(tone_mode),closed=True)
     return t
 
 def load_choices(user,default=None):
@@ -79,16 +79,15 @@ def load_choices(user,default=None):
         choices.append(default)
     return choices[::-1]
 
-def init_app(request:gr.Request):
+def init_special_guest(request:gr.Request):
     asst_info = assistant_info(botChoices[0][1])
     user = gs.user(request)
     # clientmate_user= request.username
     # browser = request.headers['user-agent']
     # client_ip = request.client.host
     info = f"`{ORGANIZATION} - {CASE}  -- {user} :: {asst_info}`  \n---"
-    citeuxmode = user_credential.get_user_tag(user,'CiteUxMode',0)
-    return ( gr.update(visible=True) if user_credential.get_user_tag(user,'admin') else gr.skip(),
-             info,
+    citeuxmode = user_credential.get_user_tag(user,'CiteUxMode',2) #default: همیشه باز
+    return ( info,
              gr.Chatbot(label=ftruncstr(asst_info[5:],45),type='messages'),
              citeUxModes[citeuxmode],
              gr.Dropdown(choices=load_choices(user,(TEMP_THREAD_LABEL,"")),value="")
@@ -143,18 +142,18 @@ def pchat_fn(msg, history, tone_mode, asst_id, request:gr.Request):
             raise gr.Error(vhfront_msg('SRV_NOT_RESPONSE'))
     else: yield ""
 
-def app_unload(request:gr.Request):
-    global app_thread
+def special_guest_unload(request:gr.Request):
+    global special_guest_thread
     sess = request.session_hash
-    t = app_thread.pop(sess,None)
+    t = special_guest_thread.pop(sess,None)
     if t and get_thread_tag(t,"title")=="Temp":
         client().beta.threads.delete(t)
 
 def promote_thread(history, chsn_thrd, request:gr.Request):
     if not chsn_thrd and len(history)>6:
-        global app_thread
+        global special_guest_thread
         sess = request.session_hash
-        t = app_thread[sess]
+        t = special_guest_thread[sess]
         assert get_thread_tag(t,"title")=="Temp", f"Illegal interaction trace; {request}"
         title_rsp = ichat( t,
                            "یک عنوان سه کلمه‌ای مناسب برای رشته گفتگوی حاضر پیشنهاد بده و به انتهای آن، تاریخ امروز در تقویم شمسی را به صورت عددی روز-ماه بچسبان.",
@@ -170,13 +169,13 @@ def promote_thread(history, chsn_thrd, request:gr.Request):
         return gr.skip(),gr.skip()
 
 def on_clear(confirmed, request:gr.Request):
-    global app_thread
+    global special_guest_thread
     sess=request.session_hash
-    t = app_thread.get(sess,None)
+    t = special_guest_thread.get(sess,None)
     if t:
         u = gs.user(request)
         if confirmed=="True":
-            app_thread[sess]=None
+            special_guest_thread[sess]=None
             title = get_thread_tag(t,"title")
             client().beta.threads.delete(t)
             if title=="Temp":
@@ -203,21 +202,24 @@ with gr.Blocks(
         ),
     fill_height=True,
     fill_width=True
-) as app:
+) as special_guest:
     ### Add a session platform to the blocks
-    from vhagilab.aSessionPlatform import aSessionPlatform
-    with gu.loadSessionPlatformOnBlocks(aSessionPlatform(), app) as gs:
+    # special_guest has a special session platform
+    with gu.loadSessionPlatformOnBlocks(
+        limUserSessionPlatform.sp,
+        special_guest,
+        alive_check_every=10
+    ) as gs:
         with gr.Row(): #max_height=1000
             with gr.Column(scale=5,min_width=400):
                 chatbox = gr.Chatbot(
                     scale=1,
                     min_height=400,
-                    height='83vh',
+                    height='82vh',
                     type='messages',
                     rtl = True,
-                    show_copy_button = False, 
                     show_copy_all_button = True,
-                    label = '===',
+                    label = '---',
                     avatar_images = ("user.ico","ai.ico")
                 )
                 inputbox = gr.Textbox(
@@ -230,11 +232,11 @@ with gr.Blocks(
                     submit_btn = "◁",
                     placeholder = "اینجا تایپ کنید ..."
                 )
-            with gr.Column(scale=1,min_width=280,variant='compact') as sidepanel:
-                info = gr.Markdown(label="Signature",show_label=True,container=True,min_height=40,max_height=70)
-                new_btn = gr.Button("رشته جدید",variant='primary')
-                with gr.Group():
-                    with gr.Row():
+            with gr.Sidebar("sidepanel",open=False,position='left',width=360) as sidepanel:
+                gr.Markdown("# دستیار مدیریت پیمان\n## شرکت مهندسی و توسعه گاز ایران",min_height="15vh",rtl=True)
+                new_btn = gr.Button("رشته جدید",variant='primary',visible=False)
+                with gr.Group(visible=False):
+                    with gr.Row(visible=False):
                         gr.Textbox("رشته جاری",show_label=False,rtl=True,min_width=80,scale=6,interactive=False,container=False)
                         clear_btn = gr.ClearButton(value='',icon="wastepaper-basket.ico",size='lm',scale=1,min_width=20)
                     chosen_thread = gr.Dropdown (
@@ -243,24 +245,26 @@ with gr.Blocks(
                         multiselect=False,
                         container=False
                     )
-                previewpane = gr.Markdown(
-                    show_label=False,
-                    show_copy_button=False,
-                    container=True,
-                    height='52vh',
-                    min_height=50
-                )
+                    previewpane = gr.Markdown(
+                        show_label=False,
+                        show_copy_button=False,
+                        container=True,
+                        height='5vh',
+                        min_height=50
+                    )
                 with gr.Accordion (
-                    "::: : ::: : ::: : ::: : ::: : ::: : ::: : ::: : ::: : :::",
+                    "::: : ::: : ::: : ::: : ::: : ::: : ::: : ::: : ::: : ::: : ::: : :::",
                     open=False
                 ) as acrdn:
+                    info = gr.Markdown(label="Signature",container=True,min_height="5vh")
                     toneMode = gr.Radio (
                         toneModes,
                         value=toneModes[0],                    
                         type='index',
                         label='بیان',
                         show_label=True,
-                        container=True
+                        container=True,
+                        visible=False
                     )
                     chosen_bot = gr.Dropdown (
                         choices=botChoices,
@@ -268,24 +272,26 @@ with gr.Blocks(
                         label='دستیار',
                         show_label=True,
                         multiselect=False,
-                        container=True
+                        container=True,
+                        visible=False
                     )
                     citeUxMode = gr.Radio (
                         citeUxModes,
                         type='index',
                         label='نمایش مآخذ',
                         show_label=True,
-                        container=True
+                        container=True,
+                        visible=False
                     )
                     #gu.otherlogin_by(gr.Button("Login as other user"))
-                    gr.Button("تغییر گذرواژه",link='./pwchange/')
-                    admin_btn = gr.Button("مدیریت کاربران",visible=False,link="./admin/")
-                    gs.signout_by(gr.Button("خروج"))
+                    #gr.Button("تغییر گذرواژه",link='./pwchange/')
+                    #admin_btn = gr.Button("مدیریت کاربران",visible=False,link="./admin/")
+                gs.signout_by(gr.Button("خروج"))
         gu.add_tagline()
         ### Load callback
         gs.loaded.success(
-            init_app,
-            outputs=[admin_btn,info,chatbox,citeUxMode,chosen_thread]
+            init_special_guest,
+            outputs=[info,chatbox,citeUxMode,chosen_thread]
         )
         gs.chatIntegrateOnLiveSession( pchat_fn,inputbox,chatbox,
                                        extra_inputs=[toneMode,chosen_bot],
@@ -294,65 +300,49 @@ with gr.Blocks(
                                        pre_extra_outputs=[chosen_thread],
                                        submit_btn="◁"
                                      )
-        @gs.live_session(acrdn.expand,outputs=[previewpane,info],show_progress=False)
-        def _adjust_shrink_pane(request:gr.Request):
-            user = gs.user(request)
-            if user_credential.get_user_tag(user,'admin'):
-                return gr.update(visible=False),gr.update(visible=False)
-            else:
-                return gr.update(visible=False),gr.skip()
-            #s='8vh' if user_credential.get_user_tag(user,'admin') else '10vh'
-            #return gr.update(height=s)
-        @gs.live_session(acrdn.collapse,outputs=[previewpane,info],show_progress=False)
-        def _adjust_expand_pane(request:gr.Request):
-            user = gs.user(request)
-            if user_credential.get_user_tag(user,'admin'):
-                return gr.update(visible=True),gr.update(visible=True)
-            else:
-                return gr.update(visible=True),gr.skip()
-            #return gr.update(height='52vh')
         @gs.live_session(citeUxMode.input,citeUxMode,None,show_progress=False)
         def _setCiteUxMode(mode, request:gr.Request):
             user = gs.user(request)
             user_credential.set_user_tag(user,'CiteUxMode',mode)
         @gs.live_session(inputbox.stop,None,inputbox,show_progress=False)
         def _cancel_run(request:gr.Request):
-            cancel_run(app_thread[request.session_hash])
+            cancel_run(special_guest_thread[request.session_hash])
             return gr.update(submit_btn="◁",stop_btn=False)
-        @gs.live_session(chatbox.retry,[chatbox,toneMode,chosen_bot],chatbox,show_progress=False)
-        def _chat_retry(history,tone_mode,asst_id,request:gr.Request):
-            global app_thread
-            sess = request.session_hash
-            t = app_thread[sess]
-            user = gs.user(request)        
-            if ( user_credential.get_user_tag(user,'CiteUxMode',0)==1 and
-                 "</details>" not in history[-1]['content'] and
-                 "مآخذ:" in history[-1]['content'] ):
-                lastresp = last_message(t)
-                if augment_quotes(lastresp):
-                    history[-1]['content'] = format_citations(lastresp,"مآخذ:",details_open=True)
-                    yield history
-                    return
-            undo_chat(t)
-            sleep(2)
-            for m in pchat_fn(history[-2]['content'],history[:-2],tone_mode,asst_id,request):
-                history[-1]['content']=m
-                yield history
-        @gs.live_session(chatbox.undo,chatbox,[inputbox,chosen_thread,chatbox],show_progress=False)
-        def _chat_undo(history,request:gr.Request):
-            global app_thread
-            sess = request.session_hash
-            undo_chat(app_thread[sess])
-            if len(history) > 2:
-                return history[-2]['content'],gr.skip(),history[:-2]
-            else:
-                return "",*on_clear('True',request)
+        # @gs.live_session(chatbox.retry,[chatbox,toneMode,chosen_bot],chatbox,show_progress=False)
+        # def _chat_retry(history,tone_mode,asst_id,request:gr.Request):
+        #     global special_guest_thread
+        #     sess = request.session_hash
+        #     t = special_guest_thread[sess]
+        #     user = gs.user(request)        
+        #     if ( user_credential.get_user_tag(user,'CiteUxMode',0)==1 and
+        #          "</details>" not in history[-1]['content'] and
+        #          "مآخذ:" in history[-1]['content'] ):
+        #         lastresp = last_message(t)
+        #         if augment_quotes(lastresp):
+        #             history[-1]['content'] = format_citations(lastresp,"مآخذ:",details_open=True)
+        #             yield history
+        #             return
+        #     undo_chat(t)
+        #     sleep(2)
+        #     for m in pchat_fn(history[-2]['content'],history[:-2],tone_mode,asst_id,request):
+        #         history[-1]['content']=m
+        #         yield history
+        ###
+        # @gs.live_session(chatbox.undo,chatbox,[inputbox,chosen_thread,chatbox],show_progress=False)
+        # def _chat_undo(history,request:gr.Request):
+        #     global special_guest_thread
+        #     sess = request.session_hash
+        #     undo_chat(special_guest_thread[sess])
+        #     if len(history) > 2:
+        #         return history[-2]['content'],gr.skip(),history[:-2]
+        #     else:
+        #         return "",*on_clear('True',request)
         @gs.live_session(new_btn.click,chosen_thread,[chosen_thread,chatbox])
         def _new_thread(chsn_thrd, request:gr.Request):
-            global app_thread
+            global special_guest_thread
             sess = request.session_hash
-            t = app_thread.get(sess,None)
-            app_thread[sess]=None
+            t = special_guest_thread.get(sess,None)
+            special_guest_thread[sess]=None
             if t:
                 if chsn_thrd:
                     u = gs.user(request)
@@ -365,12 +355,12 @@ with gr.Blocks(
         @gs.live_session(chosen_thread.select,chosen_thread,[chosen_thread,toneMode,chosen_bot,chatbox])
         def _on_change_thread(chsn_thrd,request:gr.Request):
             assert chsn_thrd, f"Illegal interaction trace; {request}"
-            global app_thread
+            global special_guest_thread
             sess = request.session_hash
-            t = app_thread.get(sess,None)
+            t = special_guest_thread.get(sess,None)
             if t and get_thread_tag(t,"title")=="Temp":
                 client().beta.threads.delete(t)
-            app_thread[sess]=chsn_thrd
+            special_guest_thread[sess]=chsn_thrd
             u = gs.user(request)
             history = flip_thread(chsn_thrd,user_credential.get_user_tag(u,'CiteUxMode',0))
             tone_mode = int(get_thread_tag(chsn_thrd,"tone",0))
@@ -390,4 +380,4 @@ with gr.Blocks(
         gs.live_session( clear_btn.click, inputbox, [chosen_thread,chatbox], show_progress=False,
                           js="(x) => confirm('از حذف این رشته گفتگو، اطمینان دارید؟')"
                         ) (on_clear)
-        app.unload(app_unload)
+        special_guest.unload(special_guest_unload)
